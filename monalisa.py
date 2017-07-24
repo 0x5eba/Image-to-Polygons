@@ -29,7 +29,6 @@ class DNA(object):
             for point in polygon.points:
                 array_point.append(tuple([point[0], point[1]]))
             pdraw.polygon(array_point, fill=(color[0], color[1], color[2]))
-            # img2.paste(draw, mask=draw)
             img2 = Image.alpha_composite(img2, draw)
 
         return img2
@@ -42,6 +41,7 @@ class DNA(object):
         if (len(finish) == len(self.polygons)):
             print("\n\nFinished\n\n")
             sys.exit()
+
         rand = random.randrange(0, len(self.polygons))
         while self.polygons[rand].changeable is False:
             rand = random.randrange(0, len(self.polygons))
@@ -65,7 +65,6 @@ class Polygons(object):
                 idx = 1
             else:
                 idx = 2
-            # idx = random.randrange(0, 3)
             value = random.randrange(0, 256)
             color = np.array(self.color)
             color[idx] = value
@@ -76,15 +75,11 @@ class Polygons(object):
             return True
 
 
-def fitness(img, draw_polygon, color, points):
+def fitness(img, draw_polygon, points):
     a = points[0]
     b = points[1]
     c = points[2]
 
-    '''
-    problema con l'OFFSET perchè va anche in negativo
-    probabilmente una soluzione è mettere a 0 se è negativo ma non funziona molto 
-    '''
     maxY = max(a[1], b[1], c[1])
     minY = min(a[1], b[1], c[1])
     minX = min(a[0], b[0], c[0])
@@ -126,15 +121,10 @@ def fitness(img, draw_polygon, color, points):
 
     if (count <= 0):
         return np.array([256, 256, 256])
-
-    # fitness_return = np.array([int(RGB_img[0]/count), int(RGB_img[1]/count), int(RGB_img[2]/count)])
-
+    
     fitness_draw = np.array([abs(int(RGB_img[0] / count) - RGB_draw_polygon[0]),
                              abs(int(RGB_img[1] / count) - RGB_draw_polygon[1]),
                              abs(int(RGB_img[2] / count) - RGB_draw_polygon[2])])
-
-    # fitness_draw = np.array([int(RGB_img[0] / count), int(RGB_img[1] / count), int(RGB_img[2] / count)])
-
     return fitness_draw
 
 
@@ -169,7 +159,6 @@ def my_draw(img, color, points):
     for point in points:
         array_point.append(tuple([point[0], point[1]]))
     pdraw.polygon(array_point, fill=(color[0], color[1], color[2]))
-    # img2.paste(draw, mask=draw)
     img2 = Image.alpha_composite(img2, draw)
     return img2
 
@@ -177,27 +166,19 @@ def my_draw(img, color, points):
 def generate_dna(img):
     polygons = []
     parent = Image.new('RGBA', img.size)
+    
     for i in range(POPULATION):
-        # side_polygon = random.randrange(MIN_SIDE_POLYGONS, MAX_SIDE_POLYGONS)
-        # randX = random.randrange(0 - OFFSET, img.size[0] + OFFSET)
-        # randY = random.randrange(0 - OFFSET, img.size[1] + OFFSET)
-        # for j in range(side_polygon):
-        #     point = generate_point(img.size, randX, randY)
-        #     points.append(point)
-
         points = generate_point(img.size)
         color = tuple(np.array([random.randrange(0, 256) for _ in range(4)]))
 
         draw_polygon = my_draw(img, color, points)
-        fitness_polygon = fitness(img, draw_polygon, color, points)
+        fitness_polygon = fitness(img, draw_polygon, points)
         polygon = Polygons(points, color, fitness_polygon, True)
-
-        parent = Image.alpha_composite(parent, draw_polygon)
-        # parent.paste(draw_polygon, mask=draw_polygon)
-
         polygons.append(polygon)
-
+        
+        parent = Image.alpha_composite(parent, draw_polygon)
         parent.save("pic.png", 'PNG')
+        
     dna = DNA(img.size, polygons)
     return dna, parent
 
@@ -211,20 +192,50 @@ def fitness_calculation(dna):
     # print("Fitness: ", tot_fitness)
 
 
-def main():
-    # open a web page with the image that refresh every second
-    url = "file.html"
-    webbrowser.open(url)
+def crossover(fitness_child, fitness_parent, dna, parent, child, index_random_poly, generations):
+    if (fitness_child[0] <= fitness_parent[0] and fitness_child[1] <= fitness_parent[1] and fitness_child[2] <=
+        fitness_parent[2]):
+        dna.polygons[index_random_poly] = child
+        parent = dna.draw()
+        parent.save("pic.png", 'PNG')
 
-    # open image
-    img = Image.open("monalisaFace.jpg")
+        # if its fitness is enough good will block the polygon to not change anymore
+        if (fitness_child[0] < 2 and fitness_child[1] < 2 and fitness_child[2] < 2):
+            dna.polygons[index_random_poly].changeable = False
 
-    # find the best population based on the given image
-    # 300 : 25600 = x : img.size[0]*img.size[1]
+        # print the percentage of the total fitness
+        fitness_calculation(dna)
+        print(f"generation: {generations}\n")
+    generations += 1
+
+
+def set_population(img):
     global POPULATION
     POPULATION = int((img.size[0] * img.size[1]) * 300 / 25600)
     global DIMENSION
-    DIMENSION = int(POPULATION / 10) / 2
+    DIMENSION = int(POPULATION / 10)
+
+
+def main(argv):
+    if len(argv) != 2:
+        print("\nInsert the path of the .py file and the path of the image\n")
+        sys.exit(0)
+
+    path = str(argv[1])
+
+    # open a web page with the image that refresh every second
+    if (os.path.exists(path) + "\\file.html"):
+        with open(os.path.dirname(path) + "\\file.html") as html:
+            webbrowser.open(html)
+    else:
+        print("\nPut the \".html\" and the \".js\" here: ", os.path.dirname(path))
+        sys.exit()
+
+    # open image
+    img = Image.open(path)
+
+    # find the best population based on the given image
+    set_population(img)
 
     # create the dna with N polygon, where N is POPULATION
     dna, parent = generate_dna(img)
@@ -241,41 +252,16 @@ def main():
         # make a copy of parent that will modify
         child = copy.deepcopy(random_poly)
         # mutate or colors or points
-        point_modify = child.mutate_polygon(img.size)
+        child.mutate_polygon(img.size)
         draw_child = my_draw(img, child.color, child.points)
-        # # if want to modify a point of a polygon
-        # if (point_modify):
-        #     parent_copy = copy.deepcopy(child)
-        #     parent_copy.fitness = fitness(img, draw_child, parent_copy.color, parent_copy.points)
-        #     fitness_parent = parent_copy.fitness
-        # # if want to modify a color of a polygon
-        # else:
-        #     child.fitness = fitness(img, draw_child, child.color, child.points)
-        child.fitness = fitness(img, draw_child, child.color, child.points)
+        # calculate the fitness for the child that has been mutate
+        child.fitness = fitness(img, draw_child, child.points)
         fitness_child = child.fitness
 
         # compare the new one created ( child ) with the older one ( parent )
         # if the child is better ( in terms of fitness ) will change the parent with the child
-        if (fitness_child[0] <= fitness_parent[0] and fitness_child[1] <= fitness_parent[1] and fitness_child[2] <=
-            fitness_parent[2]):
-            # if (point_modify):
-            #     dna.polygons[index_random_poly] = parent_copy
-            # else:
-            #     dna.polygons[index_random_poly] = child
-            dna.polygons[index_random_poly] = child
-            parent = dna.draw()
-            parent.save("pic.png", 'PNG')
-
-            # if its fitness is enough good will block the polygon to not change anymore
-            if (fitness_child[0] < 2 and fitness_child[1] < 2 and fitness_child[2] < 2):
-                dna.polygons[index_random_poly].changeable = False
-
-            # print the percentage of the total fitness
-            fitness_calculation(dna)
-            print(f"generation: {generations}")
-        generations += 1
+        crossover(fitness_child, fitness_parent, dna, parent, child, index_random_poly, generations)
 
 
 if __name__ == "__main__":
-    # main(sys.argv)
-    main()
+    main(sys.argv)
