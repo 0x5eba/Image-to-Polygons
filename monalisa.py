@@ -30,7 +30,6 @@ class DNA(object):
             for point in polygon.points:
                 array_point.append(tuple([point[0], point[1]]))
             pdraw.polygon(array_point, fill=(color[0], color[1], color[2], alpha))
-            # img2.paste(draw, mask=draw)
             img2 = Image.alpha_composite(img2, draw)
 
         return img2
@@ -67,7 +66,6 @@ class Polygons(object):
                 idx = 1
             else:
                 idx = 2
-            # idx = random.randrange(0, 3)
             value = random.randrange(0, 256)
             color = np.array(self.color)
             color[idx] = value
@@ -116,18 +114,21 @@ def fitness(img, draw_polygon, points, color):
     if (count <= 0):
         return np.array([256, 256, 256])
 
-    # fitness_return = np.array([int(RGB_img[0]/count), int(RGB_img[1]/count), int(RGB_img[2]/count)])
 
     fitness_draw = np.array([abs(int(RGB_img[0] / count) - RGB_draw_polygon[0]),
                              abs(int(RGB_img[1] / count) - RGB_draw_polygon[1]),
                              abs(int(RGB_img[2] / count) - RGB_draw_polygon[2])])
 
-    # fitness_draw = np.array([int(RGB_img[0] / count), int(RGB_img[1] / count), int(RGB_img[2] / count)])
 
     return fitness_draw
 
 
 # potrei usare il baricentro e dire che dal baricentro non si può spostare di di +- K
+'''
+Ox = (Ax+Bx+Cx) / 3
+Oy = (Ay+By+Cy) / 3
+'''
+
 def generate_point(size):
     point = np.array([[-1, -1], [-1, -1], [-1, -1]])
     while (point[0][0] < 0 or point[0][1] < 0 or point[1][0] < 0 or point[1][1] < 0 or point[2][0] < 0 or point[2][
@@ -159,7 +160,6 @@ def my_draw(img, color, points, fitness):
     for point in points:
         array_point.append(tuple([point[0], point[1]]))
     pdraw.polygon(array_point, fill=(color[0], color[1], color[2], fitness))
-    # img2.paste(draw, mask=draw)
     img2 = Image.alpha_composite(img2, draw)
     return img2
 
@@ -168,12 +168,6 @@ def generate_dna(img):
     polygons = []
     parent = Image.new('RGBA', img.size)
     for i in range(POPULATION):
-        # side_polygon = random.randrange(MIN_SIDE_POLYGONS, MAX_SIDE_POLYGONS)
-        # randX = random.randrange(0 - OFFSET, img.size[0] + OFFSET)
-        # randY = random.randrange(0 - OFFSET, img.size[1] + OFFSET)
-        # for j in range(side_polygon):
-        #     point = generate_point(img.size, randX, randY)
-        #     points.append(point)
 
         points = generate_point(img.size)
         color = tuple(np.array([random.randrange(0, 256) for _ in range(4)]))
@@ -197,25 +191,17 @@ def fitness_calculation(dna):
     for polygon in dna.polygons:
         tot_fitness += (polygon.fitness[0] + polygon.fitness[1] + polygon.fitness[2])
 
-    #print("Fitness: ", "{0:.2f}".format((100 * POPULATION / tot_fitness) * 100))
-    # print("Fitness: ", tot_fitness)
-
 
 def crossover(fitness_child, fitness_parent, dna, parent, child, index_random_poly, generations, path):
     if (fitness_child[0] <= fitness_parent[0] and fitness_child[1] <= fitness_parent[1] and fitness_child[2] <=
         fitness_parent[2]):
 
         # change color alpha of the polygon
-        alpha = 10
+        if(fitness_child.sum() > 200):
+            alpha = 30
+        else:
+            alpha = int(150*(1-fitness_child.sum()/200))
 
-        fitness_child.sum()
-
-
-
-        # if (point_modify):
-        #     dna.polygons[index_random_poly] = parent_copy
-        # else:
-        #     dna.polygons[index_random_poly] = child
         dna.polygons[index_random_poly] = child
         parent = dna.draw(alpha)
         parent.save(path + "\pic.png", 'PNG')
@@ -231,11 +217,9 @@ def crossover(fitness_child, fitness_parent, dna, parent, child, index_random_po
 
 def set_population(img):
     global POPULATION
-    #POPULATION = int((img.size[0] * img.size[1]) * 300 / 25600)
-    POPULATION = 20
+    POPULATION = int((img.size[0] * img.size[1]) * 300 / 25600)
     global DIMENSION
-    #DIMENSION = int(POPULATION / 10)
-    DIMENSION = 50
+    DIMENSION = int(POPULATION / 10)
 
 
 def main(argv):
@@ -257,7 +241,6 @@ def main(argv):
     img = Image.open(path)
 
     # find the best population based on the given image
-    # 300 : 25600 = x : img.size[0]*img.size[1]
     set_population(img)
 
     # create the dna with N polygon, where N is POPULATION
@@ -276,18 +259,10 @@ def main(argv):
         child = copy.deepcopy(random_poly)
         # mutate or colors or points
         child.mutate_polygon(img.size)
-        draw_child = my_draw(img, child.color, child.points, 250)
-
-        # # if want to modify a point of a polygon
-        # if (point_modify):
-        #     parent_copy = copy.deepcopy(child)
-        #     parent_copy.fitness = fitness(img, draw_child, parent_copy.color, parent_copy.points)
-        #     fitness_parent = parent_copy.fitness
-        # # if want to modify a color of a polygon
-        # else:
-        #     child.fitness = fitness(img, draw_child, child.color, child.points)
+        draw_child = my_draw(img, child.color, child.points, 0)
 
         # calculate the fitness for the child that has been mutate
+
         child.fitness = fitness(img, draw_child, child.points, child.color)
         fitness_child = child.fitness
 
@@ -302,4 +277,3 @@ def main(argv):
 
 if __name__ == "__main__":
     main(sys.argv)
-    
