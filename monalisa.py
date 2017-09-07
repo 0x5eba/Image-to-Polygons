@@ -1,6 +1,6 @@
 from PIL import Image, ImageDraw
-import numpy as np
 import matplotlib.path as mplPath
+import numpy as np
 import webbrowser
 import os.path
 import copy
@@ -114,20 +114,10 @@ def fitness(img, draw_polygon, points, color):
     if (count <= 0):
         return np.array([256, 256, 256])
 
-
     fitness_draw = np.array([abs(int(RGB_img[0] / count) - RGB_draw_polygon[0]),
                              abs(int(RGB_img[1] / count) - RGB_draw_polygon[1]),
                              abs(int(RGB_img[2] / count) - RGB_draw_polygon[2])])
-
-
     return fitness_draw
-
-
-# potrei usare il baricentro e dire che dal baricentro non si può spostare di di +- K
-'''
-Ox = (Ax+Bx+Cx) / 3
-Oy = (Ay+By+Cy) / 3
-'''
 
 def generate_point(size):
     point = np.array([[-1, -1], [-1, -1], [-1, -1]])
@@ -168,7 +158,6 @@ def generate_dna(img):
     polygons = []
     parent = Image.new('RGBA', img.size)
     for i in range(POPULATION):
-
         points = generate_point(img.size)
         color = tuple(np.array([random.randrange(0, 256) for _ in range(4)]))
 
@@ -177,19 +166,12 @@ def generate_dna(img):
         polygon = Polygons(points, color, fitness_polygon, True)
 
         parent = Image.alpha_composite(parent, draw_polygon)
-        # parent.paste(draw_polygon, mask=draw_polygon)
 
         polygons.append(polygon)
 
         parent.save("pic.png", 'PNG')
     dna = DNA(img.size, polygons)
     return dna, parent
-
-
-def fitness_calculation(dna):
-    tot_fitness = 0
-    for polygon in dna.polygons:
-        tot_fitness += (polygon.fitness[0] + polygon.fitness[1] + polygon.fitness[2])
 
 
 def crossover(fitness_child, fitness_parent, dna, parent, child, index_random_poly, generations, path):
@@ -209,17 +191,15 @@ def crossover(fitness_child, fitness_parent, dna, parent, child, index_random_po
         # if its fitness is enough good will block the polygon to not change anymore
         if (fitness_child[0] < 2 and fitness_child[1] < 2 and fitness_child[2] < 2):
             dna.polygons[index_random_poly].changeable = False
-
-        # print the percentage of the total fitness
-        fitness_calculation(dna)
+            
         print(f"generation: {generations}\n")
 
 
 def set_population(img):
     global POPULATION
-    POPULATION = int((img.size[0] * img.size[1]) * 300 / 25600)
+    POPULATION = 500
     global DIMENSION
-    DIMENSION = int(POPULATION / 10)
+    DIMENSION = 30
 
 
 def main(argv):
@@ -262,7 +242,6 @@ def main(argv):
         draw_child = my_draw(img, child.color, child.points, 0)
 
         # calculate the fitness for the child that has been mutate
-
         child.fitness = fitness(img, draw_child, child.points, child.color)
         fitness_child = child.fitness
 
@@ -270,7 +249,6 @@ def main(argv):
 
         # compare the new one created ( child ) with the older one ( parent )
         # if the child is better ( in terms of fitness ) will change the parent with the child
-
         crossover(fitness_child, fitness_parent, dna, parent, child, index_random_poly, generations, os.path.dirname(path))
         generations += 1
 
