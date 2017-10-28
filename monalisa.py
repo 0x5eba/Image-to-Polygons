@@ -8,8 +8,8 @@ import sys
 import random
 
 
-POPULATION = 0
-DIMENSION = 0
+POPULATION = 500
+DIMENSION = 30
 MIN_SIDE_POLYGONS = 3
 MAX_SIDE_POLYGONS = 3
 
@@ -24,6 +24,7 @@ class DNA(object):
         img2 = Image.new('RGBA', size)
         draw = Image.new('RGBA', size)
         pdraw = ImageDraw.Draw(draw)
+        
         for polygon in self.polygons:
             color = polygon.color
             array_point = []
@@ -47,6 +48,7 @@ class DNA(object):
         while self.polygons[rand].changeable is False:
             rand = random.randrange(0, len(self.polygons))
         random_poly = self.polygons[rand]
+        
         return random_poly, rand
 
 
@@ -115,14 +117,14 @@ def fitness(img, draw_polygon, points, color):
         return np.array([256, 256, 256])
 
     fitness_draw = np.array([abs(int(RGB_img[0] / count) - RGB_draw_polygon[0]),
-                             abs(int(RGB_img[1] / count) - RGB_draw_polygon[1]),
-                             abs(int(RGB_img[2] / count) - RGB_draw_polygon[2])])
+                            abs(int(RGB_img[1] / count) - RGB_draw_polygon[1]),
+                            abs(int(RGB_img[2] / count) - RGB_draw_polygon[2])])
     return fitness_draw
 
 def generate_point(size):
     point = np.array([[-1, -1], [-1, -1], [-1, -1]])
-    while (point[0][0] < 0 or point[0][1] < 0 or point[1][0] < 0 or point[1][1] < 0 or point[2][0] < 0 or point[2][
-        1] < 0):
+    while (point[0][0] < 0 or point[0][1] < 0 or point[1][0] < 0 
+            or point[1][1] < 0 or point[2][0] < 0 or point[2][1] < 0):
         point[2] = list([random.randrange(0, size[0]), random.randrange(0, size[1])])
         rand = random.random()
         if (rand <= 0.25):
@@ -175,8 +177,8 @@ def generate_dna(img):
 
 
 def crossover(fitness_child, fitness_parent, dna, parent, child, index_random_poly, generations, path):
-    if (fitness_child[0] <= fitness_parent[0] and fitness_child[1] <= fitness_parent[1] and fitness_child[2] <=
-        fitness_parent[2]):
+    if (fitness_child[0] <= fitness_parent[0] and fitness_child[1] <= fitness_parent[1] 
+            and fitness_child[2] <= fitness_parent[2]):
 
         # change color alpha of the polygon
         if(fitness_child.sum() > 200):
@@ -195,33 +197,22 @@ def crossover(fitness_child, fitness_parent, dna, parent, child, index_random_po
         print(f"generation: {generations}\n")
 
 
-def set_population(img):
-    global POPULATION
-    POPULATION = 500
-    global DIMENSION
-    DIMENSION = 30
-
-
 def main(argv):
     if len(argv) != 2:
-        print("\nInsert the path of the .py file and the path of the image\n")
-        sys.exit(0)
-
-    path = str(argv[1])
+        print("Insert the name of the image inside the directory: " + path)
+        sys.exit()
+    
+    path = os.getcwd()
 
     # open a web page with the image that refresh every second
-    path_html= os.path.dirname(path) + "\\file.html"
-    if (os.path.exists(path_html)):
+    if os.path.exists(path + "/file.html") and os.path.exists(path + "/script.js"):
         webbrowser.open(path_html)
     else:
-        print("\nPut the \".html\" and the \".js\" here: ", os.path.dirname(path))
+        print("\nPut the \".html\" and the \".js\" here: " + os.path.dirname(path))
         sys.exit()
-
+        
     # open image
-    img = Image.open(path)
-
-    # find the best population based on the given image
-    set_population(img)
+    img = Image.open(path + "/" + argv[1])
 
     # create the dna with N polygon, where N is POPULATION
     dna, parent = generate_dna(img)
@@ -244,8 +235,6 @@ def main(argv):
         # calculate the fitness for the child that has been mutate
         child.fitness = fitness(img, draw_child, child.points, child.color)
         fitness_child = child.fitness
-
-
 
         # compare the new one created ( child ) with the older one ( parent )
         # if the child is better ( in terms of fitness ) will change the parent with the child
