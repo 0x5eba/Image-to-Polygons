@@ -29,4 +29,4 @@ It will create an image, called pic.png, that is a new image based on the one pa
 
 Also it will be open in the browser, that automatically refresh the image.
 
-The program will take a lot of time to make some 
+The program will take a lot of time to make and image similar to the orgiginal.
