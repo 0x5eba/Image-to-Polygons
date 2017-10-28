@@ -4,6 +4,7 @@ This project is about genetic algorithms, in particular is about the representat
 
 I created a pyhton script that, with the help of tkinter, create random polygons in an image.
 
+**Use very small image**
 
 ## Setup
 
