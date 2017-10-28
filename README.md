@@ -21,3 +21,12 @@ python monalisa.py [name_image.format]
 
 
 Make sure to have the image file and the file.html with script.js in the same folder of monalisa.py
+
+
+## Runtime
+
+It will create an image, called pic.png, that is a new image based on the one passed by argument. 
+
+Also it will be open in the browser, that automatically refresh the image.
+
+The program will take a lot of time to make some 
