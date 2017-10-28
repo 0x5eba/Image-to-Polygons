@@ -13,13 +13,9 @@ sudo pip install -r requirements.txt
 
 ## Run
 
-Make sure to have the image file and the file.html with script.js in the same folder of monalisa.py
-
-
-How to start the python script:
-
 python monalisa.py [name_image.format]
 
-**Example**
+**Example** : python monalisa.py image.png
 
-python monalisa.py image.png
+
+Make sure to have the image file and the file.html with script.js in the same folder of monalisa.py
