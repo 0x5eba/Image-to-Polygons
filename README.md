@@ -36,9 +36,9 @@ The program will take a lot of time to make and image similar to the original.
 
 Original image
 
-<img src="https://github.com/0x5eba/Genetic_algorithm-Monalisa/blob/master/Image/photo_2018-04-13_22-12-00.jpg" width="200" height="200">
+<img src="https://github.com/0x5eba/Genetic_algorithm-Monalisa/blob/master/Image/photo_2018-04-13_22-12-00.jpg" width="200" height="300">
 
 Generated image
 
-<img src="https://github.com/0x5eba/Genetic_algorithm-Monalisa/blob/master/Image/photo_2018-04-13_22-11-53.jpg" width="400" height="400">
+<img src="https://github.com/0x5eba/Genetic_algorithm-Monalisa/blob/master/Image/photo_2018-04-13_22-11-53.jpg" width="300" height="400">
 
