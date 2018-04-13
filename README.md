@@ -31,3 +31,14 @@ It will create an image, called pic.png, that is a new image based on the one pa
 Also it will be open in the browser, that automatically refresh the image.
 
 The program will take a lot of time to make and image similar to the original.
+
+## Results
+
+Original image
+
+<img src="https://github.com/0x5eba/Genetic_algorithm-Monalisa/blob/master/Image/photo_2018-04-13_22-12-00.jpg" width="200" height="200">
+
+Generated image
+
+<img src="https://github.com/0x5eba/Genetic_algorithm-Monalisa/blob/master/Image/photo_2018-04-13_22-11-53.jpg" width="400" height="400">
+
