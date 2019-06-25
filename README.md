@@ -1,6 +1,6 @@
 # Genetic algorithm - Monalisa
 
-From a image you can create the same image but formed of polygons.
+From an image you can create the same image but formed of polygons.
 
 You can do it in 2 ways, one with genetic algorithm, the other directly.
 
