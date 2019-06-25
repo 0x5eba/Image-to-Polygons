@@ -6,13 +6,10 @@ import os.path
 import copy
 import sys
 import random
-
+import argparse
 
 POPULATION = 500
 DIMENSION = 30
-MIN_SIDE_POLYGONS = 3
-MAX_SIDE_POLYGONS = 3
-
 
 class DNA(object):
     def __init__(self, _img_size, _polygons):
@@ -78,30 +75,31 @@ class Polygons(object):
             return True
 
 
-def fitness(img, draw_polygon, points, color):
+def fitness(img, draw_polygon, points):
     a = points[0]
     b = points[1]
     c = points[2]
 
     maxY = max(a[1], b[1], c[1])
+    maxX = max(a[0], b[0], c[0])
     minY = min(a[1], b[1], c[1])
     minX = min(a[0], b[0], c[0])
 
+    minY = max(minY, 0)
+    minX = max(minX, 0)
+    maxY = min(maxY, img.size[1])
+    maxX = min(maxX, img.size[0])
+
+    bbPath = mplPath.Path(np.array(points))
     count = 0
+    RGB_img = np.zeros(3)
     calculate_color_polygon = False
     RGB_draw_polygon = np.zeros(3)
-    RGB_img = np.zeros(3)
-    rgb_draw = draw_polygon.convert('RGBA')
     rgb_img = img.convert('RGBA')
+    rgb_draw = draw_polygon.convert('RGBA')
 
-    for y in range(minY, img.size[1]):
-        if y is maxY:
-            break
-        for x in range(minX, img.size[0]):
-            if (x < 0 or y < 0):
-                continue
-            bbPath = mplPath.Path(np.array(points))
-
+    for y in range(minY, maxY):
+        for x in range(minX, maxX):
             if (bbPath.contains_point((x, y))):
                 if (calculate_color_polygon is False):
                     RGB_draw_polygon = list(rgb_draw.getpixel((x, y)))
@@ -164,7 +162,7 @@ def generate_dna(img):
         color = tuple(np.array([random.randrange(0, 256) for _ in range(4)]))
 
         draw_polygon = my_draw(img, color, points, 50)
-        fitness_polygon = fitness(img, draw_polygon, points, color)
+        fitness_polygon = fitness(img, draw_polygon, points)
         polygon = Polygons(points, color, fitness_polygon, True)
 
         parent = Image.alpha_composite(parent, draw_polygon)
@@ -176,7 +174,7 @@ def generate_dna(img):
     return dna, parent
 
 
-def crossover(fitness_child, fitness_parent, dna, parent, child, index_random_poly, generations, path):
+def crossover(fitness_child, fitness_parent, dna, parent, child, index_random_poly, generations):
     if (fitness_child[0] <= fitness_parent[0] and fitness_child[1] <= fitness_parent[1] 
             and fitness_child[2] <= fitness_parent[2]):
 
@@ -188,7 +186,7 @@ def crossover(fitness_child, fitness_parent, dna, parent, child, index_random_po
 
         dna.polygons[index_random_poly] = child
         parent = dna.draw(alpha)
-        parent.save(path + "\pic.png", 'PNG')
+        parent.save("pic.png", 'PNG')
 
         # if its fitness is enough good will block the polygon to not change anymore
         if (fitness_child[0] < 2 and fitness_child[1] < 2 and fitness_child[2] < 2):
@@ -198,21 +196,33 @@ def crossover(fitness_child, fitness_parent, dna, parent, child, index_random_po
 
 
 def main(argv):
-    if len(argv) != 2:
-        print("Insert the name of the image inside the directory: " + path)
-        sys.exit()
-    
     path = os.getcwd()
 
-    # open a web page with the image that refresh every second
-    if os.path.exists(path + "/file.html") and os.path.exists(path + "/script.js"):
-        webbrowser.open(path_html)
-    else:
-        print("\nPut the \".html\" and the \".js\" here: " + os.path.dirname(path))
+    if not os.path.exists(path + "/file.html"):
+        print("\nPut the \".html\" here: " + path)
         sys.exit()
-        
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--population', type=int, default=500, metavar='N',
+                        help='number of population to use (default: 500)')
+    parser.add_argument('--img', type=str, default="Image/image.png",
+                        help='the image to use for the generation of polygons')
+    parser.add_argument('--dimension', type=int, default=30, metavar='N',
+                        help='size of a single polygon (default: 30)')
+    args = parser.parse_args()
+
+    global POPULATION, DIMENSION
+    POPULATION = args.population
+    DIMENSION = args.dimension
+
     # open image
-    img = Image.open(path + "/" + argv[1])
+    img = Image.open(path + "/" + args.img)
+
+    # generate the image with polygons
+    generate_dna(img)
+
+    # open a web page with the image that refresh every second
+    webbrowser.open(path + "/file.html")
 
     # create the dna with N polygon, where N is POPULATION
     dna, parent = generate_dna(img)
@@ -233,12 +243,12 @@ def main(argv):
         draw_child = my_draw(img, child.color, child.points, 0)
 
         # calculate the fitness for the child that has been mutate
-        child.fitness = fitness(img, draw_child, child.points, child.color)
+        child.fitness = fitness(img, draw_child, child.points)
         fitness_child = child.fitness
 
         # compare the new one created ( child ) with the older one ( parent )
         # if the child is better ( in terms of fitness ) will change the parent with the child
-        crossover(fitness_child, fitness_parent, dna, parent, child, index_random_poly, generations, os.path.dirname(path))
+        crossover(fitness_child, fitness_parent, dna, parent, child, index_random_poly, generations)
         generations += 1
 
 
